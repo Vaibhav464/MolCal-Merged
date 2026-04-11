@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>MolCal - TLC Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f0f2f5;
+            color: #222;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 0 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            height: 70px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        nav-links {
+            display: flex;
+            gap: 0;
+            list-style: none;
+        }
+
+        nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 3px solid #667eea;
+        }
+
+        nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-bottom: 3px solid #667eea;
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding: 16px 24px 24px;
+            box-sizing: border-box;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            padding: 12px 14px;
+            box-sizing: border-box;
+        }
+
+        .card h2 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 4px;
+        }
+
+        .controls-group {
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .controls-group label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .inline-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        select,
+        input[type="text"] {
+            font-family: inherit;
+            font-size: 13px;
+            padding: 3px 5px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid #4a90e2;
+            background: #4a90e2;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #3b7ad0;
+        }
+
+        button.secondary {
+            background: #fff;
+            color: #4a90e2;
+        }
+
+        button.secondary:hover {
+            background: #e9f1ff;
+        }
+
+        .system-info-row input {
+            width: 260px;
+        }
+
+        .tlc-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tlc-panel {
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            width: 250px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .tlc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .tlc-title-input {
+            width: 140px;
+            font-weight: bold;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            padding: 1px 2px;
+            background: transparent;
+        }
+
+        .uv-row {
+            margin-top: 4px;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        canvas {
+            border: 1px solid #999;
+            background-color: #f5f2e9;
+            cursor: crosshair;
+            margin-top: 4px;
+            border-radius: 4px;
+        }
+
+        .small-label {
+            font-size: 12px;
+        }
+
+        .lane-names {
+            margin-top: 6px;
+            font-size: 11px;
+        }
+
+        .lane-names input {
+            width: 35px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-size: 11px;
+            padding: 2px 3px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 850px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <div class="logo-icon">⚗️</div>
+                <span>MolCal</span>
+            </a>
+            <nav-links>
+                <a href="/">MolCal</a>
+                <a href="/mw-calc">MW Calculator</a>
+                <a href="/tlc-sim" class="active">TLC Simulator</a>
+            </nav-links>
+        </nav>
+    </header>
+
+    <h1>TLC Simulator</h1>
+
+    <div class="page">
+        <!-- LEFT: control panel -->
+        <div class="card">
+            <h2>Spot & plate controls</h2>
+
+            <div class="controls-group">
+                <label>Add / remove spots on:</label>
+                <select id="activeTLCSelect">
+                    <option value="0">TLC 1 (left)</option>
+                </select>
+            </div>
+
+            <div class="controls-group">
+                <div class="inline-row">
+                    <label>Shape:</label>
+                    <select id="shapeSelect">
+                        <option value="circle">Circle</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="heart">Heart</option>
+                    </select>
+                </div>
+
+                <div class="inline-row">
+                    <label>Spot color:</label>
+                    <select id="colorSelect">
+                        <option value="#000000" style="color:#000000;">● Black</option>
+                        <option value="#e74c3c" style="color:#e74c3c;">● Red</option>
+                        <option value="#2980b9" style="color:#2980b9;">● Blue</option>
+                        <option value="#27ae60" style="color:#27ae60;">● Green</option>
+                        <option value="#e91e63" style="color:#e91e63;">● Pink</option>
+                        <option value="#f1c40f" style="color:#f1c40f;">● Yellow</option>
+                        <option value="#e67e22" style="color:#e67e22;">● Orange</option>
+                    </select>
+                </div>
+
+                <div class="inline-row">
+                    <label>Compound name:</label>
+                    <input type="text" id="compoundName" placeholder="e.g. Sample 1" maxlength="20" />
+                </div>
+
+                <div class="inline-row">
+                    <button id="addSpotBtn">Add spot</button>
+                    <button id="duplicateSpotBtn" class="secondary">Add spot at same place</button>
+                    <button id="removeSpotBtn" class="secondary">Remove spot</button>
+                </div>
+            </div>
+
+            <div class="controls-group system-info-row">
+                <label>Solvent system (printed in image):</label>
+                <input type="text" id="systemInfo" placeholder="e.g. Hexane:EtOAc 7:3" maxlength="80" />
+            </div>
+
+            <div class="controls-group">
+                <div class="inline-row">
+                    <button id="addTLCBtn">Add second TLC</button>
+                    <button id="removeTLCBtn" class="secondary" disabled>Remove second TLC</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: TLC plates -->
+        <div class="card">
+            <h2>TLC plates</h2>
+            <div class="tlc-container">
+                <!-- TLC 1 -->
+                <div class="tlc-panel" id="panel0">
+                    <div class="tlc-header">
+                        <span>Name:</span>
+                        <input id="title0" class="tlc-title-input" type="text" value="TLC 1" />
+                    </div>
+
+                    <div class="uv-row">
+                        <label>
+                            <input type="checkbox" id="uvShort0" checked /> Short UV
+                        </label>
+                        <label style="margin-left:10px;">
+                            <input type="checkbox" id="uvLong0" /> Long UV
+                        </label>
+                    </div>
+
+                    <canvas id="canvas0" width="220" height="500"></canvas>
+
+                    <!-- lane name inputs -->
+                    <div class="lane-names">
+                        <span style="display:block; margin-bottom:2px;">Lane names (optional):</span>
+                        <input type="text" id="lane0name1" placeholder="1" maxlength="8" />
+                        <input type="text" id="lane0name2" placeholder="2" maxlength="8" />
+                        <input type="text" id="lane0name3" placeholder="3" maxlength="8" />
+                        <input type="text" id="lane0name4" placeholder="4" maxlength="8" />
+                        <input type="text" id="lane0name5" placeholder="5" maxlength="8" />
+                    </div>
+
+                    <div>
+                        <label class="small-label">
+                            <input type="checkbox" id="lock0" /> Lock spots
+                        </label>
+                    </div>
+                    <div>
+                        <button id="refresh0" class="secondary">Refresh</button>
+                        <button id="download0">Download</button>
+                    </div>
+                </div>
+
+                <!-- TLC 2 -->
+                <div class="tlc-panel hidden" id="panel1">
+                    <div class="tlc-header">
+                        <span>Name:</span>
+                        <input id="title1" class="tlc-title-input" type="text" value="TLC 2" />
+                    </div>
+
+                    <div class="uv-row">
+                        <label>
+                            <input type="checkbox" id="uvShort1" checked /> Short UV
+                        </label>
+                        <label style="margin-left:10px;">
+                            <input type="checkbox" id="uvLong1" /> Long UV
+                        </label>
+                    </div>
+
+                    <canvas id="canvas1" width="220" height="500"></canvas>
+
+                    <!-- lane name inputs -->
+                    <div class="lane-names">
+                        <span style="display:block; margin-bottom:2px;">Lane names (optional):</span>
+                        <input type="text" id="lane1name1" placeholder="1" maxlength="8" />
+                        <input type="text" id="lane1name2" placeholder="2" maxlength="8" />
+                        <input type="text" id="lane1name3" placeholder="3" maxlength="8" />
+                        <input type="text" id="lane1name4" placeholder="4" maxlength="8" />
+                        <input type="text" id="lane1name5" placeholder="5" maxlength="8" />
+                    </div>
+
+                    <div>
+                        <label class="small-label">
+                            <input type="checkbox" id="lock1" /> Lock spots
+                        </label>
+                    </div>
+                    <div>
+                        <button id="refresh1" class="secondary">Refresh</button>
+                        <button id="download1">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MAX_SPOTS = 5;
+        const tlcs = [];
+
+        function createTLC(id) {
+            const canvas = document.getElementById('canvas' + id);
+            const ctx = canvas.getContext('2d');
+            const lockCheckbox = document.getElementById('lock' + id);
+            const uvShort = document.getElementById('uvShort' + id);
+            const uvLong = document.getElementById('uvLong' + id);
+
+            const tlc = {
+                id,
+                canvas,
+                ctx,
+                spots: [],
+                locked: false,
+                draggingSpotIndex: -1,
+                dragOffsetY: 0,
+                baselineY: canvas.height - 40,
+                topLineY: 40,
+                sideMargin: 25,
+                uvMode: 'Short UV',
+                nextSpotNumber: 1,
+                nextLaneIndex: 0
+            };
+
+            lockCheckbox.addEventListener('change', () => {
+                tlc.locked = lockCheckbox.checked;
+            });
+
+            uvShort.addEventListener('change', () => {
+                if (uvShort.checked) {
+                    uvLong.checked = false;
+                    tlc.uvMode = 'Short UV';
+                } else if (!uvLong.checked) {
+                    uvShort.checked = true;
+                    tlc.uvMode = 'Short UV';
+                }
+            });
+
+            uvLong.addEventListener('change', () => {
+                if (uvLong.checked) {
+                    uvShort.checked = false;
+                    tlc.uvMode = 'Long UV';
+                } else if (!uvShort.checked) {
+                    uvLong.checked = true;
+                    tlc.uvMode = 'Long UV';
+                }
+            });
+
+            setupCanvasEvents(tlc);
+            drawTLC(tlc);
+            return tlc;
+        }
+
+        function drawTLC(tlc) {
+            const { ctx, canvas, baselineY, topLineY, sideMargin } = tlc;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#f5f2e9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(sideMargin, topLineY);
+            ctx.lineTo(sideMargin, baselineY);
+            ctx.moveTo(canvas.width - sideMargin, topLineY);
+            ctx.lineTo(canvas.width - sideMargin, baselineY);
+            ctx.stroke();
+
+            const steps = 5;
+            const stepSize = (baselineY - topLineY) / steps;
+            ctx.strokeStyle = '#777';
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= steps; i++) {
+                const y = baselineY - i * stepSize;
+                const dashLength = 6;
+                ctx.beginPath();
+                ctx.moveTo(sideMargin - dashLength, y);
+                ctx.lineTo(sideMargin + dashLength, y);
+                ctx.moveTo(canvas.width - sideMargin - dashLength, y);
+                ctx.lineTo(canvas.width - sideMargin + dashLength, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(sideMargin, baselineY);
+            ctx.lineTo(canvas.width - sideMargin, baselineY);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#000';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(sideMargin, topLineY);
+            ctx.lineTo(canvas.width - sideMargin, topLineY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            tlc.spots.forEach(spot => {
+                drawSpot(ctx, spot);
+            });
+
+            drawLaneNames(tlc);
+        }
+
+        function drawSpot(ctx, spot) {
+            const size = 8;
+            ctx.fillStyle = spot.color || '#000000';
+
+            if (spot.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(spot.x, spot.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (spot.shape === 'square') {
+                ctx.fillRect(spot.x - size, spot.y - size, size * 2, size * 2);
+            } else if (spot.shape === 'triangle') {
+                ctx.beginPath();
+                ctx.moveTo(spot.x, spot.y - size);
+                ctx.lineTo(spot.x - size, spot.y + size);
+                ctx.lineTo(spot.x + size, spot.y + size);
+                ctx.closePath();
+                ctx.fill();
+            } else if (spot.shape === 'heart') {
+                const s = 10;
+                ctx.beginPath();
+                ctx.moveTo(spot.x, spot.y + s * 0.6);
+                ctx.bezierCurveTo(
+                    spot.x - s, spot.y - s * 0.2,
+                    spot.x - s, spot.y - s,
+                    spot.x, spot.y - s * 0.2
+                );
+                ctx.bezierCurveTo(
+                    spot.x + s, spot.y - s,
+                    spot.x + s, spot.y - s * 0.2,
+                    spot.x, spot.y + s * 0.6
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            if (spot.label) {
+                ctx.font = 'bold 11px "Segoe UI", Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#000';
+                ctx.fillText(spot.label, spot.x, spot.y + 16);
+            }
+        }
+
+        function getLaneCenterXByIndex(tlc, index) {
+            const w = tlc.canvas.width;
+            const fractions = [0.18, 0.32, 0.50, 0.68, 0.82];
+            return w * fractions[index];
+        }
+
+        function getLaneCenterXIndex(idx, canvasWidth) {
+            const fractions = [0.18, 0.32, 0.50, 0.68, 0.82];
+            return canvasWidth * fractions[idx];
+        }
+
+        function drawLaneNames(tlc) {
+            const { ctx, canvas, baselineY } = tlc;
+            const y = baselineY + 14;
+            ctx.font = '10px "Segoe UI", Arial';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+
+            for (let i = 0; i < 5; i++) {
+                const inputId = `lane${tlc.id}name${i + 1}`;
+                const el = document.getElementById(inputId);
+                if (!el) continue;
+                const text = el.value.trim();
+                if (!text) continue;
+
+                const x = getLaneCenterXIndex(i, canvas.width);
+                ctx.fillText(text, x, y);
+            }
+        }
+
+        function setupCanvasEvents(tlc) {
+            const canvas = tlc.canvas;
+
+            canvas.addEventListener('mousedown', e => {
+                if (tlc.locked) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const index = hitTestSpot(tlc, x, y);
+                if (index !== -1) {
+                    tlc.draggingSpotIndex = index;
+                    tlc.dragOffsetY = y - tlc.spots[index].y;
+                }
+            });
+
+            canvas.addEventListener('mousemove', e => {
+                if (tlc.locked) return;
+                if (tlc.draggingSpotIndex === -1) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const spot = tlc.spots[tlc.draggingSpotIndex];
+
+                let newY = y - tlc.dragOffsetY;
+                const topLimit = tlc.topLineY;
+                const bottomLimit = tlc.baselineY;
+                if (newY < topLimit) newY = topLimit;
+                if (newY > bottomLimit) newY = bottomLimit;
+                spot.y = newY;
+
+                drawTLC(tlc);
+            });
+
+            window.addEventListener('mouseup', () => {
+                tlc.draggingSpotIndex = -1;
+            });
+        }
+
+        function hitTestSpot(tlc, x, y) {
+            const radius = 10;
+            for (let i = tlc.spots.length - 1; i >= 0; i--) {
+                const s = tlc.spots[i];
+                const dx = x - s.x;
+                const dy = y - s.y;
+                if (dx * dx + dy * dy <= radius * radius) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        function downloadTLC(tlc) {
+            const titleInput = document.getElementById('title' + tlc.id);
+            const titleText = titleInput && titleInput.value.trim()
+                ? titleInput.value.trim()
+                : 'TLC ' + (tlc.id + 1);
+
+            const systemInfoInput = document.getElementById('systemInfo');
+            const systemInfo = systemInfoInput.value.trim();
+
+            drawTLC(tlc);
+
+            const { ctx, canvas } = tlc;
+
+            ctx.font = 'bold 14px "Segoe UI", Arial';
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.fillText(titleText, canvas.width / 2, 20);
+
+            ctx.font = '12px "Segoe UI", Arial';
+            const uvText = tlc.uvMode;
+            ctx.fillText(uvText, canvas.width / 2, 38);
+
+            if (systemInfo) {
+                ctx.font = 'bold 12px "Segoe UI", Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(systemInfo, canvas.width - 5, canvas.height - 5);
+            }
+
+            const link = document.createElement('a');
+            const baseName = titleText.replace(/\s+/g, '_');
+            link.download = baseName + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            drawTLC(tlc);
+        }
+
+        const activeTLCSelect = document.getElementById('activeTLCSelect');
+        const shapeSelect = document.getElementById('shapeSelect');
+        const colorSelect = document.getElementById('colorSelect');
+        const compoundNameInput = document.getElementById('compoundName');
+        const addSpotBtn = document.getElementById('addSpotBtn');
+        const duplicateSpotBtn = document.getElementById('duplicateSpotBtn');
+        const removeSpotBtn = document.getElementById('removeSpotBtn');
+        const addTLCBtn = document.getElementById('addTLCBtn');
+        const removeTLCBtn = document.getElementById('removeTLCBtn');
+
+        tlcs.push(createTLC(0));
+
+        document.getElementById('refresh0').addEventListener('click', () => {
+            tlcs[0].spots = [];
+            tlcs[0].nextSpotNumber = 1;
+            tlcs[0].nextLaneIndex = 0;
+            drawTLC(tlcs[0]);
+        });
+        document.getElementById('download0').addEventListener('click', () => {
+            downloadTLC(tlcs[0]);
+        });
+
+        document.getElementById('refresh1').addEventListener('click', () => {
+            if (tlcs[1]) {
+                tlcs[1].spots = [];
+                tlcs[1].nextSpotNumber = 1;
+                tlcs[1].nextLaneIndex = 0;
+                drawTLC(tlcs[1]);
+            }
+        });
+        document.getElementById('download1').addEventListener('click', () => {
+            if (tlcs[1]) downloadTLC(tlcs[1]);
+        });
+
+        addSpotBtn.addEventListener('click', () => {
+            const idx = parseInt(activeTLCSelect.value, 10);
+            const tlc = tlcs[idx];
+            if (!tlc) {
+                alert('That TLC plate is not active yet.');
+                return;
+            }
+
+            if (tlc.spots.length >= MAX_SPOTS) {
+                alert('Maximum 5 spots per TLC using "Add spot". Use "Add spot at same place" for extra spots in a lane.');
+                return;
+            }
+
+            const shape = shapeSelect.value;
+            const color = colorSelect.value;
+
+            const label =
+                compoundNameInput.value.trim() ||
+                'Spot ' + tlc.nextSpotNumber;
+
+            let laneIndex = -1;
+            for (let i = 0; i < 5; i++) {
+                const hasSpotInLane = tlc.spots.some(s => s.laneIndex === i);
+                if (!hasSpotInLane) {
+                    laneIndex = i;
+                    break;
+                }
+            }
+
+            if (laneIndex === -1) {
+                alert('All 5 lanes already have a spot from "Add spot". Use "Add spot at same place" for more in the same lane.');
+                return;
+            }
+
+            const x = getLaneCenterXByIndex(tlc, laneIndex);
+            const y = tlc.baselineY - 5;
+
+            tlc.spots.push({ x, y, shape, label, color, laneIndex });
+            tlc.nextSpotNumber++;
+
+            drawTLC(tlc);
+        });
+
+        duplicateSpotBtn.addEventListener('click', () => {
+            const idx = parseInt(activeTLCSelect.value, 10);
+            const tlc = tlcs[idx];
+            if (!tlc) {
+                alert('That TLC plate is not active yet.');
+                return;
+            }
+
+            if (tlc.spots.length === 0) {
+                alert('No spot to duplicate on this TLC.');
+                return;
+            }
+
+            const last = tlc.spots[tlc.spots.length - 1];
+            const laneCount = tlc.spots.filter(s => s.laneIndex === last.laneIndex).length;
+            if (laneCount >= 4) {
+                alert('This lane already has 4 spots (limit per lane).');
+                return;
+            }
+
+            const label =
+                compoundNameInput.value.trim() ||
+                'Spot ' + tlc.nextSpotNumber;
+
+            const copy = {
+                x: last.x,
+                y: last.y,
+                shape: last.shape,
+                label,
+                color: last.color,
+                laneIndex: last.laneIndex
+            };
+            tlc.spots.push(copy);
+            tlc.nextSpotNumber++;
+            drawTLC(tlc);
+        });
+
+        removeSpotBtn.addEventListener('click', () => {
+            const idx = parseInt(activeTLCSelect.value, 10);
+            const tlc = tlcs[idx];
+            if (!tlc) return;
+            if (tlc.spots.length === 0) return;
+
+            const removed = tlc.spots.pop();
+            const removedLane = removed.laneIndex;
+            tlc.nextLaneIndex = removedLane;
+            drawTLC(tlc);
+        });
+
+        addTLCBtn.addEventListener('click', () => {
+            if (tlcs.length >= 2) return;
+
+            const panel1 = document.getElementById('panel1');
+            panel1.classList.remove('hidden');
+
+            tlcs.push(createTLC(1));
+
+            const opt = document.createElement('option');
+            opt.value = '1';
+            opt.textContent = 'TLC 2 (right)';
+            activeTLCSelect.appendChild(opt);
+
+            addTLCBtn.disabled = true;
+            removeTLCBtn.disabled = false;
+        });
+
+        removeTLCBtn.addEventListener('click', () => {
+            if (tlcs.length < 2) return;
+
+            tlcs.pop();
+
+            const panel1 = document.getElementById('panel1');
+            panel1.classList.add('hidden');
+
+            const options = Array.from(activeTLCSelect.options);
+            const opt2 = options.find(o => o.value === '1');
+            if (opt2) activeTLCSelect.removeChild(opt2);
+            activeTLCSelect.value = '0';
+
+            addTLCBtn.disabled = false;
+            removeTLCBtn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>

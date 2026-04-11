@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>MolCal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+    <!-- SheetJS XLSX -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            font-weight: 400;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            margin: 0;
+            background-color: #f4f7f9;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 0 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            height: 70px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        nav-links {
+            display: flex;
+            gap: 0;
+            list-style: none;
+        }
+
+        nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 3px solid #667eea;
+        }
+
+        nav-links a.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-bottom: 3px solid #667eea;
+        }
+
+        .container {
+            max-width: 79rem;
+            margin: 0 auto;
+            margin-bottom: 80px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            min-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .title {
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #3498db, #8e44ad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Layout */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .left-pane {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-pane {
+            flex: 1.5;
+        }
+
+        /* Inputs list */
+        .input-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .compound-row {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+            cursor: pointer;
+        }
+
+        .compound-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .compound-row.active {
+            background-color: #f0f8ff;
+        }
+
+        .compound-title {
+            margin: 0;
+            font-size: 1em;
+            color: #34495e;
+            width: 150px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .compound-row input,
+        .compound-row select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            flex-grow: 1;
+            font-size: 1em;
+            min-width: 5rem;
+        }
+
+        .compound-row input[type="number"]::-webkit-inner-spin-button,
+        .compound-row input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .compound-row input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .compound-row input[placeholder="Name"] {
+            min-width: 12rem;
+            flex-grow: 2;
+        }
+
+        .compound-row input[placeholder="Weight"] {
+            margin-left: 10rem;
+        }
+
+        .compound-row select {
+            flex-grow: 0;
+            width: auto;
+        }
+
+        /* Suggestions */
+        .name-input-wrapper {
+            position: relative;
+            min-width: 12rem;
+        }
+
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestions-dropdown li {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .suggestions-dropdown li:last-child {
+            border-bottom: none;
+        }
+
+        .suggestions-dropdown li:hover,
+        .suggestions-dropdown li.selected {
+            background-color: #e8f4f8;
+            color: #2980b9;
+        }
+
+        /* Inline results */
+        .calculation-result {
+            font-weight: bold;
+            color: #2980b9;
+            margin-top: 8px;
+            padding-left: 2rem;
+        }
+
+        .weight-display,
+        .volume-display,
+        .moles-display {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .weight-display {
+            color: #27ae60;
+        }
+
+        .volume-display {
+            color: #f1c40f;
+        }
+
+        .moles-display {
+            color: #8e44ad;
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            justify-content: flex-start;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+        }
+
+        .buttons button:nth-child(1) {
+            background-color: #2ecc71;
+        }
+
+        .buttons button:nth-child(2) {
+            background-color: #3498db;
+        }
+
+        .buttons button:nth-child(3) {
+            background-color: #f39c12;
+        }
+
+        .reset-button {
+            background-color: #e74c3c;
+        }
+
+        /* Saved compounds box */
+        .compound-database {
+            background: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .compound-database h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .db-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .db-form input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .add-to-db {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+        }
+
+        .db-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .db-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .db-list li:last-child {
+            border-bottom: none;
+        }
+
+        .db-list span {
+            font-weight: bold;
+            flex-grow: 1;
+        }
+
+        .use-btn,
+        .remove-btn {
+            padding: 5px 10px;
+            margin-left: 5px;
+            font-size: 0.8em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .use-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* Yield panel */
+        .yield-panel {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background: #f9fbff;
+            border-radius: 8px;
+            border: 1px solid #d6e2f3;
+            font-size: 0.95rem;
+        }
+
+        .yield-panel h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        .yield-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 8px;
+        }
+
+        .yield-row label {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            color: #555;
+        }
+
+        .yield-row input {
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .yield-row-inline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .yield-row-inline label {
+            min-width: auto;
+            font-size: 0.8rem;
+        }
+
+        .yield-row-inline input {
+            flex: 1;
+            min-width: 5rem;
+        }
+
+        .yield-label-inline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Table on right */
+        .results-table-container {
+            margin-top: 0;
+            text-align: center;
+            overflow-x: auto;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .calculation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            min-width: 700px;
+        }
+
+        .calculation-table th,
+        .calculation-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .calculation-table th {
+            background-color: #34495e;
+            color: #fff;
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+
+        .calculation-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        /* Footer */
+        footer {
+            width: 100%;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            padding: 18px 8px;
+            color: #333;
+            background: #f4f7f9;
+            font-size: 1em;
+        }
+
+        /* Mobile/tablet */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .title {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .main-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .compound-row {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 8px;
+                padding: 10px 0;
+                margin: 0 auto;
+            }
+
+            .compound-row input,
+            .compound-row select {
+                text-align: center;
+                width: 90%;
+                max-width: 300px;
+            }
+
+            .compound-title {
+                width: 100%;
+                font-size: 0.95em;
+                text-align: center;
+            }
+
+            .calculation-result {
+                text-align: center;
+                padding-left: 0;
+            }
+
+            .buttons {
+                justify-content: center;
+                gap: 10px;
+            }
+
+            button {
+                min-width: 8rem;
+            }
+
+            .use-btn,
+            .remove-btn {
+                min-width: 5rem;
+            }
+
+            footer div {
+                font-size: 0.95em;
+                padding: 0 2px;
+            }
+
+            footer {
+                width: 95% !important;
+                position: static !important;
+                padding: 14px 2px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .right-pane {
+                width: 100%;
+            }
+
+            .compound-row input[placeholder="Weight"] {
+                margin-left: 0rem;
+            }
+
+            .compound-database {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <div class="logo-icon">⚗️</div>
+                <span>MolCal</span>
+            </a>
+            <nav-links>
+                <a href="/" class="active">MolCal</a>
+                <a href="/mw-calc">MW Calculator</a>
+                <a href="/tlc-sim">TLC Simulator</a>
+            </nav-links>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1 class="title">MolCal</h1>
+
+        <div class="main-content">
+            <div class="left-pane">
+                <div class="input-form" id="compounds-container">
+                    <!-- rows injected by JS -->
+                </div>
+
+                <div class="compound-database">
+                    <h3>Saved Compounds</h3>
+                    <form class="db-form" id="db-form">
+                        <input type="text" id="db-name" placeholder="Name" />
+                        <input type="number" id="db-mw" placeholder="MW (g/mol)" step="any" />
+                        <input type="number" id="db-density" placeholder="Density (g/mL)" step="any" />
+                        <button type="submit" class="add-to-db">Save</button>
+                    </form>
+                    <ul class="db-list" id="db-list"></ul>
+                </div>
+            </div>
+
+            <div class="right-pane">
+                <div class="results-table-container" id="results-container" style="display:none;">
+                    <h2>Calculation Summary</h2>
+                    <table class="calculation-table">
+                        <thead>
+                            <tr>
+                                <th>Sr. No.</th>
+                                <th>Name</th>
+                                <th>Weight (<span id="weight-unit-header">mg</span>)</th>
+                                <th>Volume (mL)</th>
+                                <th>Molecular Weight (g/mol)</th>
+                                <th>Moles (mol)</th>
+                                <th>Equivalent (w.r.t LR)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- NEW: Yield Calculator -->
+                <div class="yield-panel" id="yield-panel">
+                    <h3>Yield Calculator</h3>
+
+                    <div class="yield-row yield-row-inline">
+                        <label class="yield-label-inline">
+                            <input type="checkbox" id="yield-manual-toggle" />
+                            Use manual moles of LR
+                        </label>
+                    </div>
+
+                    <div class="yield-row yield-row-inline">
+                        <label>Moles of limiting reactant (LR)</label>
+                        <input type="number" id="yield-lr-moles" step="any" min="0" />
+
+                        <label>Moles of product per mole of LR</label>
+                        <input type="number" id="yield-stoich" placeholder="1" step="any" min="0" />
+                    </div>
+
+                    <div class="yield-row yield-row-inline">
+                        <label>Product MW (g/mol)</label>
+                        <input type="number" id="yield-mw" placeholder="MW" step="any" min="0" />
+
+                        <label>Actual (g)</label>
+                        <input type="number" id="yield-actual" placeholder="Actual" step="any" min="0" />
+                    </div>
+
+                    <div class="yield-row yield-row-inline">
+                        <label>Theoretical (g)</label>
+                        <input type="text" id="yield-theoretical" readonly />
+
+                        <label>% Yield</label>
+                        <input type="text" id="yield-percent" readonly />
+                    </div>
+                </div>
+
+
+                <div class="buttons">
+                    <button id="add-compound-btn">+ Add Compound (Enter)</button>
+                    <button id="preview-table-btn">Preview Table (Shift+Enter)</button>
+                    <button id="export-excel-btn">Export to Excel</button>
+                    <button id="reset-btn" class="reset-button">Reset (Esc)</button>
+                </div>
+            </div>
+
+            <footer>
+                <div>
+                    <div>
+                        Developed by <span style="color:#614d12;">Parth D. Parmar, Student of Late Prof. PSS, Department
+                            of
+                            Chemistry,
+                            Gujarat
+                            University</span>
+                    </div>
+                    <div>
+                        For suggestions:
+                        <a href="mailto:parmarparth2111@gmail.com"
+                            style="color:#2c81b9;text-decoration:none;">parmarparth2111@gmail.com</a> ,
+                        <a href="mailto:vaibhav.ag464@gmail.com"
+                            style="color:#2c81b9;text-decoration:none;">vaibhav.ag464@gmail.com</a>
+                    </div>
+                </div>
+            </footer>
+
+            <script>
+                // ---------- STATE ----------
+                let compounds = [
+                    {
+                        name: "Limiting Reactant",
+                        mw: "",
+                        weight: "",
+                        unit: "mg",
+                        eq: "1.0",
+                        density: "",
+                    },
+                ];
+                let editingIndex = 0;
+                let dbCompounds = [];
+                let showTable = false;
+
+                let showSuggestions = false;
+                let filteredSuggestions = [];
+                let selectedSuggestionIndex = -1;
+                let activeCompoundIndex = -1;
+
+                // ---------- UTIL ----------
+                function parseNumber(value) {
+                    const n = parseFloat(value);
+                    return Number.isFinite(n) ? n : 0;
+                }
+
+                function loadDbFromLocalStorage() {
+                    try {
+                        const saved = localStorage.getItem("compoundDatabase");
+                        dbCompounds = saved ? JSON.parse(saved) : [];
+                    } catch (e) {
+                        dbCompounds = [];
+                    }
+                }
+
+                function saveDbToLocalStorage() {
+                    try {
+                        localStorage.setItem("compoundDatabase", JSON.stringify(dbCompounds));
+                    } catch (e) { }
+                }
+
+                function computeResults() {
+                    if (!compounds[0] || !compounds[0].mw || !compounds[0].weight) {
+                        return compounds.map((c) => ({
+                            ...c,
+                            moles: "",
+                            calculatedWeight: "",
+                            calculatedVolume: "",
+                        }));
+                    }
+
+                    const limitingReactant = compounds[0];
+                    const limitingMw = parseNumber(limitingReactant.mw);
+                    const limitingEq = parseNumber(limitingReactant.eq);
+                    const limitingWeight = parseNumber(limitingReactant.weight);
+
+                    const limitingWeightInGrams =
+                        limitingReactant.unit === "mg" ? limitingWeight / 1000 : limitingWeight;
+
+                    const limitingMoles =
+                        limitingMw > 0 ? limitingWeightInGrams / limitingMw : 0;
+
+                    return compounds.map((c) => {
+                        const eq = parseNumber(c.eq);
+                        const mw = parseNumber(c.mw);
+                        const density = parseNumber(c.density);
+
+                        const moles =
+                            limitingMoles > 0 && eq > 0 && limitingEq > 0
+                                ? (limitingMoles * eq) / limitingEq
+                                : 0;
+
+                        const calculatedWeightInGrams = moles * mw;
+
+                        const calculatedWeight =
+                            limitingReactant.unit === "mg"
+                                ? calculatedWeightInGrams * 1000
+                                : calculatedWeightInGrams;
+
+                        let calculatedVolume = "";
+                        if (density > 0) {
+                            calculatedVolume = calculatedWeightInGrams / density;
+                        }
+
+                        const displayCalculatedWeight =
+                            calculatedWeight > 0 ? calculatedWeight.toFixed(4) : "";
+                        const displayCalculatedVolume =
+                            calculatedVolume > 0 ? calculatedVolume.toFixed(4) : "";
+                        const displayMoles = moles > 0 ? moles.toFixed(6) : "";
+
+                        return {
+                            ...c,
+                            moles: displayMoles,
+                            calculatedWeight: displayCalculatedWeight,
+                            calculatedVolume: displayCalculatedVolume,
+                        };
+                    });
+                }
+
+                function preventArrowScroll(e) {
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                        e.preventDefault();
+                    }
+                }
+
+                function preventWheelScroll(e) {
+                    e.target.blur();
+                }
+
+                function getLimitingReactantMoles() {
+                    const res = computeResults();
+                    if (!res[0] || !res[0].moles) return 0;
+                    const m = parseFloat(res[0].moles);
+                    return Number.isFinite(m) ? m : 0;
+                }
+
+                function updateYieldPanel() {
+                    const lrMolesInput = document.getElementById("yield-lr-moles");
+                    const manualToggle = document.getElementById("yield-manual-toggle");
+                    const stoichInput = document.getElementById("yield-stoich");
+                    const productMwInput = document.getElementById("yield-mw");
+                    const theoreticalInput = document.getElementById("yield-theoretical");
+                    const actualInput = document.getElementById("yield-actual");
+                    const percentInput = document.getElementById("yield-percent");
+
+                    if (
+                        !lrMolesInput ||
+                        !manualToggle ||
+                        !stoichInput ||
+                        !productMwInput ||
+                        !theoreticalInput ||
+                        !actualInput ||
+                        !percentInput
+                    ) {
+                        return;
+                    }
+
+                    let lrMoles;
+
+                    if (manualToggle.checked) {
+                        // manual mode: take value from input
+                        lrMoles = parseFloat(lrMolesInput.value);
+                        if (!Number.isFinite(lrMoles) || lrMoles <= 0) {
+                            lrMoles = 0;
+                            lrMolesInput.value = "";
+                        }
+                    } else {
+                        // auto mode: use LR from stoichiometry
+                        lrMoles = getLimitingReactantMoles();
+                        if (lrMoles > 0) {
+                            lrMolesInput.value = lrMoles.toFixed(6);
+                        } else {
+                            lrMolesInput.value = "";
+                        }
+                    }
+
+                    const stoich = parseFloat(stoichInput.value);
+                    const prodMw = parseFloat(productMwInput.value);
+                    const actual = parseFloat(actualInput.value);
+
+                    let theoretical = 0;
+                    if (lrMoles > 0 && stoich > 0 && prodMw > 0) {
+                        const productMoles = lrMoles * stoich;
+                        theoretical = productMoles * prodMw;
+                        theoreticalInput.value = theoretical.toFixed(4);
+                    } else {
+                        theoreticalInput.value = "";
+                    }
+
+                    if (theoretical > 0 && actual > 0) {
+                        const percent = (actual / theoretical) * 100;
+                        percentInput.value = percent.toFixed(2);
+                    } else {
+                        percentInput.value = "";
+                    }
+                }
+
+                function setupYieldInputs() {
+                    const stoichInput = document.getElementById("yield-stoich");
+                    const productMwInput = document.getElementById("yield-mw");
+                    const actualInput = document.getElementById("yield-actual");
+                    const lrMolesInput = document.getElementById("yield-lr-moles");
+                    const manualToggle = document.getElementById("yield-manual-toggle");
+
+                    [stoichInput, productMwInput, actualInput, lrMolesInput].forEach((inp) => {
+                        if (!inp) return;
+                        inp.addEventListener("input", () => {
+                            const v = parseFloat(inp.value);
+                            if (!isNaN(v) && v < 0) {
+                                inp.value = "";
+                            }
+                            updateYieldPanel();
+                        });
+                    });
+
+                    if (manualToggle) {
+                        manualToggle.addEventListener("change", () => {
+                            updateYieldPanel();
+                        });
+                    }
+                }
+
+
+                // ---------- RENDER UI ----------
+                function renderCompounds() {
+                    const container = document.getElementById("compounds-container");
+                    container.innerHTML = "";
+
+                    const results = computeResults();
+                    const weightUnitHeader = document.getElementById("weight-unit-header");
+                    if (weightUnitHeader) {
+                        weightUnitHeader.textContent = compounds[0]?.unit || "mg";
+                    }
+
+                    compounds.forEach((c, i) => {
+                        const row = document.createElement("div");
+                        row.className = "compound-row" + (i === editingIndex ? " active" : "");
+
+                        row.addEventListener("click", (e) => {
+                            const tag = e.target.tagName;
+                            if (
+                                tag !== "INPUT" &&
+                                tag !== "SELECT" &&
+                                tag !== "BUTTON" &&
+                                tag !== "TEXTAREA"
+                            ) {
+                                editingIndex = i;
+                                highlightActiveRow();
+                            }
+                        });
+
+                        const title = document.createElement("h3");
+                        title.className = "compound-title";
+                        title.textContent = i === 0 ? "Limiting Reactant" : "Compound " + (i + 1);
+                        row.appendChild(title);
+
+                        const nameWrapper = document.createElement("div");
+                        nameWrapper.className = "name-input-wrapper";
+
+                        const nameInput = document.createElement("input");
+                        nameInput.type = "text";
+                        nameInput.placeholder = "Name";
+                        nameInput.value = c.name || "";
+
+                        nameInput.addEventListener("input", (e) => {
+                            const value = e.target.value;
+                            compounds[i].name = value;
+                            handleNameChange(i, value);
+                        });
+
+                        nameInput.addEventListener("change", (e) => {
+                            handleNameChange(i, e.target.value);
+                        });
+
+                        nameInput.addEventListener("keydown", (e) => {
+                            handleNameKeyDown(e);
+                        });
+
+                        nameInput.addEventListener("blur", () => {
+                            setTimeout(() => {
+                                showSuggestions = false;
+                                renderSuggestionsForRow(i, nameWrapper);
+                            }, 200);
+                        });
+
+                        nameWrapper.appendChild(nameInput);
+                        row.appendChild(nameWrapper);
+
+                        function makeNumberInput(placeholder, field) {
+                            const inp = document.createElement("input");
+                            inp.type = "number";
+                            inp.placeholder = placeholder;
+                            inp.value = c[field] || "";
+                            inp.min = "0";
+                            inp.step = "any";
+
+                            inp.addEventListener("keydown", (e) => {
+                                preventArrowScroll(e);
+                            });
+
+                            inp.addEventListener("wheel", preventWheelScroll);
+
+                            inp.addEventListener("input", (e) => {
+                                const val = e.target.value;
+                                const numValue = parseFloat(val);
+                                if (!isNaN(numValue) && numValue < 0) {
+                                    return;
+                                }
+                                compounds[i][field] = val;
+                                updateInlineResults();
+                            });
+
+                            inp.addEventListener("change", () => {
+                                updateInlineResults();
+                            });
+
+                            return inp;
+                        }
+
+                        const mwInput = makeNumberInput("MW (g/mol)", "mw");
+                        row.appendChild(mwInput);
+
+                        const densityInput = makeNumberInput("Density (g/mL)", "density");
+                        row.appendChild(densityInput);
+
+                        if (i === 0) {
+                            const weightInput = makeNumberInput("Weight", "weight");
+                            row.appendChild(weightInput);
+
+                            const unitSelect = document.createElement("select");
+                            ["mg", "g"].forEach((u) => {
+                                const opt = document.createElement("option");
+                                opt.value = u;
+                                opt.textContent = u;
+                                if (c.unit === u) opt.selected = true;
+                                unitSelect.appendChild(opt);
+                            });
+                            unitSelect.addEventListener("change", (e) => {
+                                compounds[i].unit = e.target.value;
+                                updateInlineResults();
+                            });
+                            row.appendChild(unitSelect);
+                        } else {
+                            const eqInput = makeNumberInput("Molar Equivalent", "eq");
+                            row.appendChild(eqInput);
+                        }
+
+                        const calcSpan = document.createElement("span");
+                        calcSpan.className = "calculation-result";
+                        calcSpan.dataset.index = i.toString();
+                        row.appendChild(calcSpan);
+
+                        container.appendChild(row);
+                    });
+
+                    highlightActiveRow();
+                    updateInlineResults();
+                    renderDatabase();
+                }
+
+                function highlightActiveRow() {
+                    const rows = document.querySelectorAll(".compound-row");
+                    rows.forEach((row, idx) => {
+                        if (idx === editingIndex) {
+                            row.classList.add("active");
+                        } else {
+                            row.classList.remove("active");
+                        }
+                    });
+                }
+
+                function updateInlineResults() {
+                    const results = computeResults();
+                    const weightUnitHeader = document.getElementById("weight-unit-header");
+                    if (weightUnitHeader) {
+                        weightUnitHeader.textContent = compounds[0]?.unit || "mg";
+                    }
+
+                    results.forEach((r, i) => {
+                        const span = document.querySelector(
+                            '.calculation-result[data-index="' + i + '"]'
+                        );
+                        if (!span) return;
+                        span.innerHTML = "";
+                        if (r.calculatedWeight) {
+                            const wSpan = document.createElement("span");
+                            wSpan.className = "weight-display";
+                            wSpan.textContent =
+                                r.calculatedWeight + " " + (compounds[0].unit || "mg");
+                            span.appendChild(wSpan);
+
+                            if (r.calculatedVolume) {
+                                const vSpan = document.createElement("span");
+                                vSpan.className = "volume-display";
+                                vSpan.textContent = ", " + r.calculatedVolume + " mL";
+                                span.appendChild(vSpan);
+                            }
+
+                            const mSpan = document.createElement("span");
+                            mSpan.className = "moles-display";
+                            mSpan.textContent = ", " + r.moles + " mol";
+                            span.appendChild(mSpan);
+                        }
+                    });
+
+                    if (showTable) {
+                        renderResultsTable();
+                    }
+
+                    updateYieldPanel();
+                }
+
+                function renderResultsTable() {
+                    const resultsContainer = document.getElementById("results-container");
+                    const resultsBody = document.getElementById("results-body");
+                    const res = computeResults();
+                    resultsContainer.style.display = "block";
+                    resultsBody.innerHTML = "";
+
+                    res.forEach((r, i) => {
+                        const tr = document.createElement("tr");
+
+                        function tdText(text) {
+                            const td = document.createElement("td");
+                            td.textContent = text;
+                            return td;
+                        }
+
+                        tr.appendChild(tdText(String(i + 1)));
+                        tr.appendChild(tdText(r.name || ""));
+                        tr.appendChild(
+                            tdText(i === 0 ? r.weight || "" : r.calculatedWeight || "")
+                        );
+                        tr.appendChild(tdText(r.calculatedVolume || ""));
+                        tr.appendChild(tdText(r.mw || ""));
+                        tr.appendChild(tdText(r.moles || ""));
+                        tr.appendChild(tdText(r.eq || ""));
+                        resultsBody.appendChild(tr);
+                    });
+                }
+
+                function renderDatabase() {
+                    const list = document.getElementById("db-list");
+                    list.innerHTML = "";
+                    dbCompounds.forEach((c, i) => {
+                        const li = document.createElement("li");
+
+                        const span = document.createElement("span");
+                        span.textContent = c.name;
+                        li.appendChild(span);
+
+                        const useBtn = document.createElement("button");
+                        useBtn.className = "use-btn";
+                        useBtn.textContent = "Use";
+                        useBtn.addEventListener("click", () => {
+                            let targetIndex = editingIndex;
+                            const activeElement = document.activeElement;
+                            if (activeElement) {
+                                const rowEl = activeElement.closest(".compound-row");
+                                if (rowEl) {
+                                    const rows = Array.from(
+                                        document.querySelectorAll(".compound-row")
+                                    );
+                                    const idx = rows.indexOf(rowEl);
+                                    if (idx >= 0) targetIndex = idx;
+                                }
+                            }
+
+                            compounds[targetIndex].name = c.name;
+                            compounds[targetIndex].mw = c.mw;
+                            compounds[targetIndex].density = c.density;
+                            renderCompounds();
+                        });
+                        li.appendChild(useBtn);
+
+                        const removeBtn = document.createElement("button");
+                        removeBtn.className = "remove-btn";
+                        removeBtn.textContent = "Remove";
+                        removeBtn.addEventListener("click", () => {
+                            dbCompounds.splice(i, 1);
+                            saveDbToLocalStorage();
+                            renderCompounds();
+                        });
+                        li.appendChild(removeBtn);
+
+                        list.appendChild(li);
+                    });
+                }
+
+                function renderSuggestionsForRow(rowIndex, nameWrapper) {
+                    const old = nameWrapper.querySelector(".suggestions-dropdown");
+                    if (old) old.remove();
+
+                    if (
+                        !showSuggestions ||
+                        filteredSuggestions.length === 0 ||
+                        activeCompoundIndex !== rowIndex
+                    ) {
+                        return;
+                    }
+
+                    const ul = document.createElement("ul");
+                    ul.className = "suggestions-dropdown";
+
+                    filteredSuggestions.forEach((sugg, idx) => {
+                        const li = document.createElement("li");
+                        li.textContent = sugg.name;
+                        if (idx === selectedSuggestionIndex) {
+                            li.classList.add("selected");
+                        }
+
+                        li.addEventListener("mousedown", (e) => {
+                            e.preventDefault();
+                            applySuggestionToCompound(rowIndex, sugg);
+
+                            setTimeout(() => {
+                                const rows = document.querySelectorAll(".compound-row");
+                                const row = rows[rowIndex];
+                                if (!row) return;
+                                const wrapper = row.querySelector(".name-input-wrapper");
+                                if (!wrapper) return;
+                                const nameInput = wrapper.querySelector("input");
+                                if (nameInput) {
+                                    nameInput.value = sugg.name;
+                                    nameInput.focus();
+                                }
+                            }, 0);
+                        });
+
+                        ul.appendChild(li);
+                    });
+
+                    nameWrapper.appendChild(ul);
+                }
+
+                // ---------- NAME + SUGGESTIONS ----------
+                function handleNameChange(index, value) {
+                    compounds[index].name = value;
+                    const trimmed = value.trim();
+
+                    if (trimmed.length > 0) {
+                        const filtered = dbCompounds.filter((c) =>
+                            c.name.toLowerCase().includes(trimmed.toLowerCase())
+                        );
+                        filteredSuggestions = filtered;
+                        showSuggestions = filtered.length > 0;
+                        selectedSuggestionIndex = -1;
+                        activeCompoundIndex = index;
+                    } else {
+                        showSuggestions = false;
+                        filteredSuggestions = [];
+                        selectedSuggestionIndex = -1;
+                        activeCompoundIndex = -1;
+                    }
+
+                    const rows = document.querySelectorAll(".compound-row");
+                    const row = rows[index];
+                    if (!row) return;
+                    const wrapper = row.querySelector(".name-input-wrapper");
+                    if (!wrapper) return;
+                    renderSuggestionsForRow(index, wrapper);
+                }
+
+                function applySuggestionToCompound(index, compound) {
+                    compounds[index].name = compound.name;
+                    compounds[index].mw = compound.mw;
+                    compounds[index].density = compound.density;
+
+                    showSuggestions = false;
+                    filteredSuggestions = [];
+                    selectedSuggestionIndex = -1;
+                    activeCompoundIndex = -1;
+
+                    renderCompounds();
+                }
+
+                function handleNameKeyDown(e) {
+                    if (!showSuggestions || filteredSuggestions.length === 0) return;
+
+                    switch (e.key) {
+                        case "ArrowDown":
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectedSuggestionIndex =
+                                selectedSuggestionIndex < filteredSuggestions.length - 1
+                                    ? selectedSuggestionIndex + 1
+                                    : 0;
+                            refreshSuggestionDropdownOnly();
+                            break;
+                        case "ArrowUp":
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectedSuggestionIndex =
+                                selectedSuggestionIndex > 0
+                                    ? selectedSuggestionIndex - 1
+                                    : filteredSuggestions.length - 1;
+                            refreshSuggestionDropdownOnly();
+                            break;
+                        case "Tab":
+                        case "Enter":
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (activeCompoundIndex < 0) return;
+
+                            let chosen;
+                            if (selectedSuggestionIndex >= 0) {
+                                chosen = filteredSuggestions[selectedSuggestionIndex];
+                            } else if (filteredSuggestions.length > 0) {
+                                chosen = filteredSuggestions[0];
+                            }
+                            if (chosen) {
+                                applySuggestionToCompound(activeCompoundIndex, chosen);
+
+                                setTimeout(() => {
+                                    const rows = document.querySelectorAll(".compound-row");
+                                    const row = rows[activeCompoundIndex];
+                                    if (!row) return;
+                                    const wrapper = row.querySelector(".name-input-wrapper");
+                                    if (!wrapper) return;
+                                    const nameInput = wrapper.querySelector("input");
+                                    if (nameInput) {
+                                        nameInput.value = chosen.name;
+                                        nameInput.focus();
+                                    }
+                                }, 0);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                function refreshSuggestionDropdownOnly() {
+                    if (activeCompoundIndex < 0) return;
+                    const rows = document.querySelectorAll(".compound-row");
+                    const row = rows[activeCompoundIndex];
+                    if (!row) return;
+                    const wrapper = row.querySelector(".name-input-wrapper");
+                    if (!wrapper) return;
+                    renderSuggestionsForRow(activeCompoundIndex, wrapper);
+                }
+
+                // ---------- COMPOUNDS ----------
+                function addCompound() {
+                    if (!compounds[0].mw || !compounds[0].weight) {
+                        alert(
+                            "Please enter the weight and molecular weight for the Limiting Reactant first."
+                        );
+                        return;
+                    }
+                    const newIndex = compounds.length;
+                    compounds.push({
+                        name: "",
+                        mw: "",
+                        eq: "",
+                        density: "",
+                        weight: "",
+                        moles: "",
+                        unit: compounds[0].unit || "mg",
+                    });
+                    editingIndex = newIndex;
+                    showTable = false;
+                    renderCompounds();
+                }
+
+                function resetAll() {
+                    compounds = [
+                        {
+                            name: "Limiting Reactant",
+                            mw: "",
+                            weight: "",
+                            unit: "mg",
+                            eq: "1.0",
+                            density: "",
+                        },
+                    ];
+                    editingIndex = 0;
+                    showTable = false;
+                    renderCompounds();
+                }
+
+                // ---------- EXCEL ----------
+                function exportToExcel() {
+                    const results = computeResults();
+                    const unit = compounds[0].unit || "mg";
+
+                    const dataToExport = results.map((r, i) => ({
+                        "Sr. No.": i + 1,
+                        Name: r.name,
+                        Weight: r.calculatedWeight
+                            ? r.calculatedWeight + " " + unit
+                            : r.weight
+                                ? r.weight + " " + unit
+                                : "",
+                        ...(r.calculatedVolume && { "Volume (mL)": r.calculatedVolume }),
+                        "Molecular Weight (g/mol)": r.mw,
+                        "Moles (mol)": r.moles,
+                        Equivalent: r.eq,
+                        ...(r.density && { "Density (g/mL)": r.density }),
+                    }));
+
+                    const ws = XLSX.utils.json_to_sheet(dataToExport);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "MolCal");
+                    XLSX.writeFile(wb, "MolCal.xlsx");
+                }
+
+                // ---------- DB FORM ----------
+                function setupDatabaseForm() {
+                    const form = document.getElementById("db-form");
+                    const nameInput = document.getElementById("db-name");
+                    const mwInput = document.getElementById("db-mw");
+                    const densityInput = document.getElementById("db-density");
+
+                    [mwInput, densityInput].forEach((inp) => {
+                        inp.addEventListener("keydown", (e) => {
+                            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                                e.preventDefault();
+                            }
+                        });
+                        inp.addEventListener("wheel", (e) => {
+                            e.preventDefault();
+                            inp.blur();
+                        });
+                        inp.addEventListener("input", () => {
+                            const v = parseFloat(inp.value);
+                            if (!isNaN(v) && v < 0) {
+                                inp.value = "";
+                            }
+                        });
+                    });
+
+                    form.addEventListener("submit", (e) => {
+                        e.preventDefault();
+                        const name = nameInput.value.trim();
+                        const mw = mwInput.value;
+                        const density = densityInput.value;
+
+                        if (!name || (!mw && !density)) return;
+
+                        const exists = dbCompounds.some(
+                            (c) => c.name.toLowerCase() === name.toLowerCase()
+                        );
+                        if (exists) {
+                            alert("A compound with this name already exists in the saved list.");
+                            return;
+                        }
+
+                        dbCompounds.push({ name, mw, density });
+                        saveDbToLocalStorage();
+                        nameInput.value = "";
+                        mwInput.value = "";
+                        densityInput.value = "";
+                        renderCompounds();
+                    });
+                }
+
+                // ---------- GLOBAL KEYS ----------
+                function setupGlobalKeys() {
+                    window.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter" && e.shiftKey) {
+                            e.preventDefault();
+                            showTable = true;
+                            renderResultsTable();
+                        } else if (e.key === "Enter") {
+                            if (
+                                document.activeElement &&
+                                (document.activeElement.tagName === "INPUT" ||
+                                    document.activeElement.tagName === "SELECT" ||
+                                    document.activeElement.tagName === "BUTTON" ||
+                                    document.activeElement.tagName === "TEXTAREA")
+                            ) {
+                                return;
+                            }
+                            e.preventDefault();
+                            addCompound();
+                        } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            resetAll();
+                        }
+                    });
+                }
+
+                // ---------- BUTTONS ----------
+                function setupButtons() {
+                    document
+                        .getElementById("add-compound-btn")
+                        .addEventListener("click", addCompound);
+                    document
+                        .getElementById("preview-table-btn")
+                        .addEventListener("click", () => {
+                            showTable = true;
+                            renderResultsTable();
+                        });
+                    document
+                        .getElementById("export-excel-btn")
+                        .addEventListener("click", exportToExcel);
+                    document.getElementById("reset-btn").addEventListener("click", resetAll);
+                }
+
+                // ---------- INIT ----------
+                loadDbFromLocalStorage();
+                setupDatabaseForm();
+                setupGlobalKeys();
+                setupButtons();
+                setupYieldInputs();
+                renderCompounds();
+            </script>
+</body>
+
+</html>

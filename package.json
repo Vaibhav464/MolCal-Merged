@@ -1,0 +1,13 @@
+{
+  "name": "molcal-complete",
+  "version": "1.0.0",
+  "description": "Unified MolCal - Chemistry calculation tool hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "@rdkit/rdkit": "^2025.3.4-1.0.0"
+  }
+}
