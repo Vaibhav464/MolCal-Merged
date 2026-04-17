@@ -3,16 +3,11 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>MolCal - TLC Simulator</title>
+    <title> MolCal TLC </title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0;
             background: #f0f2f5;
             color: #222;
         }
@@ -81,14 +76,18 @@
             border-bottom: 3px solid #667eea;
         }
 
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
         .page {
             display: grid;
             grid-template-columns: 320px 1fr;
             gap: 20px;
             padding: 16px 24px 24px;
             box-sizing: border-box;
-            max-width: 1400px;
-            margin: 0 auto;
         }
 
         .card {
@@ -204,7 +203,6 @@
             background-color: #f5f2e9;
             cursor: crosshair;
             margin-top: 4px;
-            border-radius: 4px;
         }
 
         .small-label {
@@ -226,12 +224,6 @@
 
         .hidden {
             display: none;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin: 20px 0;
         }
 
         @media (max-width: 850px) {
@@ -256,8 +248,6 @@
             </nav-links>
         </nav>
     </header>
-
-    <h1>TLC Simulator</h1>
 
     <div class="page">
         <!-- LEFT: control panel -->
